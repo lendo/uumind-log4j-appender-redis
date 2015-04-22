@@ -14,7 +14,6 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.Protocol;
-import redis.clients.util.SafeEncoder;
 
 /**
  * 目前使用ConcurrentLinkedQueue来作为日志缓存队列
@@ -112,8 +111,11 @@ public class SimpleRedisAppender extends AppenderSkeleton implements Runnable {
 					try {
 						Jedis jedis = pool.getResource();
 						String message = layout.format(event);
-						System.out.println(message);
 						jedis.lpush(key, message);
+						/*
+						 * pool.returnResource() is deprecated in jedis 2.7.1
+						 * starting from Jedis 3.0 pool.returnResource() won't exist. Resouce cleanup should be done using jedis.close()
+						 */
 						jedis.close();
 					} catch (Exception e) {
 						errorHandler.error(e.getMessage(), e, ErrorCode.GENERIC_FAILURE, event);
