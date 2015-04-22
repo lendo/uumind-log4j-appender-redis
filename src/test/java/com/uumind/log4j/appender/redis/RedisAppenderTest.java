@@ -7,10 +7,10 @@ public class RedisAppenderTest {
 	
 	public static void main(String[] args) throws Exception {
 		for(int i=0;i<10000;i++) {
-			log.info("测试日志");
+			log.info("Log Test");
 		}
 		
-		System.out.println("已完成");
+		System.out.println("Done");
 		Thread.sleep(10000);
 	}
 
