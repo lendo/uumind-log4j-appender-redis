@@ -11,7 +11,6 @@ public class RedisAppenderTest {
 		}
 		
 		System.out.println("Done");
-		Thread.sleep(10000);
 	}
 
 }

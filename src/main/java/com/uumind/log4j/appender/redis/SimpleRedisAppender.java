@@ -13,6 +13,8 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.Protocol;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisDataException;
 
 /**
  * 参考了：log4j-redis-appender(https://github.com/ryantenney/log4j-redis-appender)
@@ -107,8 +109,9 @@ public class SimpleRedisAppender extends AppenderSkeleton implements Runnable {
 			LoggingEvent event;
 
 			while ((event = events.take()) != null) {
+				Jedis jedis = null;
 				try {
-					Jedis jedis = pool.getResource();
+					jedis = pool.getResource();
 					String message = layout.format(event);
 					jedis.lpush(key, message);
 					/*
@@ -117,11 +120,24 @@ public class SimpleRedisAppender extends AppenderSkeleton implements Runnable {
 					 * exist. Resouce cleanup should be done using jedis.close()
 					 */
 					jedis.close();
+				} catch (JedisConnectionException e) {
+					if(jedis!=null) jedis.close();
+					events.add(event);
+					System.out.println("Redis connection timeout，re-push log event！");
+					//errorHandler.error(e.getMessage(), e, ErrorCode.GENERIC_FAILURE, event);
+				} catch (JedisDataException e) {
+					if(jedis!=null) jedis.close();
+					events.add(event);
+					System.out.println("Redis data is wrong，re-push log event！");
+					//errorHandler.error(e.getMessage(), e, ErrorCode.GENERIC_FAILURE, event);
 				} catch (Exception e) {
+					if(jedis!=null) jedis.close();
+					events.add(event);
+					System.out.println("Unkown Exception！");
 					errorHandler.error(e.getMessage(), e, ErrorCode.GENERIC_FAILURE, event);
 				}
 			}
-		} catch (Exception e) {
+		} catch (InterruptedException e) {
 			errorHandler.error(e.getMessage(), e, ErrorCode.WRITE_FAILURE);
 		}
 	}
