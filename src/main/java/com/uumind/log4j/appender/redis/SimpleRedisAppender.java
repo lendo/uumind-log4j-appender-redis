@@ -16,13 +16,16 @@ import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.Protocol;
 
 /**
+ * 参考了：log4j-redis-appender(https://github.com/ryantenney/log4j-redis-appender)
+ * 但是没有采用批量和定时任务的策略，只要有日志append进来，就立即写入redis.
+ * 
  * 目前使用ConcurrentLinkedQueue来作为日志缓存队列
  * 且SimpleRedisAppender本身作为守护进程存在，所以如果日志高速入队列，可能造成队列数据尚未读取完成，则守护线程被中止的情况。
  * 下一步可以考虑使用持久化队列替代ConcurrentLinkedQueue，参考如下：
  * https://github.com/flipkart-incubator/Iris-BufferQueue
  * https://github.com/magro/persistent-queue
  * 
- * @author saker
+ * @author lendo
  *
  */
 public class SimpleRedisAppender extends AppenderSkeleton implements Runnable {
